@@ -45,6 +45,8 @@ import {
   signInContractId,
 } from '@/utils/config';
 import { KEYPOM_OPTIONS } from '@/utils/keypom-options';
+import { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/router';
 
 export default function VmInitializer() {
   const [signedIn, setSignedIn] = useState(false);
@@ -60,7 +62,9 @@ export default function VmInitializer() {
   const setAuthStore = useAuthStore((state) => state.set);
   const setVmStore = useVmStore((store) => store.set);
   const { requestAuthentication, saveCurrentUrl } = useSignInRedirect();
+  const searchParams = useSearchParams();
   const idOS = useIdOS();
+  const router = useRouter();
   const idosSDK = useIdosStore((state) => state.idOS);
 
   useEffect(() => {
@@ -144,6 +148,20 @@ export default function VmInitializer() {
       setWalletModal(selectorModal);
     });
   }, [idOS, near]);
+
+  useEffect(() => {
+    const isConnectWallet = searchParams.get('connectWallet') === 'true';
+    if (isConnectWallet && walletModal) {
+      // Add your logic here, for example, connect the wallet
+      requestSignInWithWallet();
+      const params = new URLSearchParams(router.query as unknown as string);
+      // Remove query string
+      params.delete('connectWallet');
+      const queryString = params.toString();
+      const path = `/${queryString ? `?${queryString}` : ''}`;
+      router.push(path, '', { scroll: false });
+    }
+  }, [walletModal, searchParams]);
 
   const requestSignMessage = useCallback(
     async (message: string) => {
